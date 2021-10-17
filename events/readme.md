@@ -8,8 +8,8 @@
 >
 > X服务器在同一连接上将事件返回给客户端
 
-[事件类型](./types.md)
-[事件结构](./structures.md)
-[事件掩码](./masks.md)
-[事件处理](./processing.md)
+* [事件类型](./types.md)
+* [事件结构](./structures.md)
+* [事件掩码](./masks.md)
+* [事件处理](./processing.md)
 
