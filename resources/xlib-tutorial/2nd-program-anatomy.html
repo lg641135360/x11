@@ -1,0 +1,282 @@
+<HTML>
+<HEAD>
+<TITLE>Xlib programming tutorial: anatomy of the most basic Xlib program</TITLE>
+</HEAD>
+
+<BODY>
+<H1 ALIGN=center>Anatomy of the most basic Xlib program</H1>
+
+The program starts with the legal stuff:
+
+<PRE><CODE>
+#include &lt;X11/Xlib.h&gt; // Every Xlib program must include this
+#include &lt;assert.h&gt;   // I include this to test return values the lazy way
+#include &lt;unistd.h&gt;   // So we got the profile for 10 seconds
+
+#define NIL (0)       // A name for the void pointer
+</PRE></CODE>
+
+Then the serious thing. First we open a connection to the server.
+
+<PRE><CODE>
+Display *dpy = XOpenDisplay(NIL);
+assert(dpy);
+</PRE></CODE>
+
+If it fails (and it may), <B><A HREF="/gui/x/xlib/display/opening.html">XOpenDisplay()</A></B> will return NIL.
+
+<P>
+
+We gonna create a window, but we need to get the window's background
+color first. X uses a quite complex color model in order to accommodate
+to every conceivable piece of hardware. Each color is encoded by an integer,
+but the integer for a given color may change from a machine to another
+one, and even on the same machine, from an execution of the program to
+the next. The only "colors" that X guarantees to exist are black and
+white. We can get them using the 
+<B><A HREF="/gui/x/xlib/display/display-macros.html#BlackPixel">BlackPixel()</A></B>
+and 
+<B><A HREF="/gui/x/xlib/display/display-macros.html#WhitePixel">WhitePixel()</A></B>
+macros.
+
+<PRE><CODE>
+      int blackColor = BlackPixel(dpy, DefaultScreen(dpy));
+      int whiteColor = WhitePixel(dpy, DefaultScreen(dpy));
+</PRE></CODE>
+
+As we yet can see, most of the Xlib calls take the "display" (the
+value returned by
+<B><A HREF="/gui/x/xlib/display/opening.html">XOpenDisplay()</A></B>)
+as their first parameter. <A HREF="server.html">You want to know why ?</A>
+
+<P>
+
+There is still someting magic, (the 
+<B><A HREF="/gui/x/xlib/display/display-macros.html#DefaultScreen">DefaultScreen()</A></B>
+stuff), but we gonna keep it for a <A HREF="screen-and-root-window.html">later
+explanation</A>. We now can
+create our window:
+
+<PRE><CODE>
+      // Create the window
+
+      Window w = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 0, 0, 
+				     200, 100, 0, blackColor, blackColor);
+</PRE></CODE>
+
+Unlike what appears in the <A HREF="./">dialog</A>, we use the
+function
+<B><A HREF="/gui/x/xlib/window/XCreateWindow.html">XCreateSimpleWindow()</A></B>
+instead of
+<B><A HREF="/gui/x/xlib/window/XCreateWindow.html">XCreateWindow()</A></B>.
+<B><A HREF="/gui/x/xlib/window/XCreateWindow.html">XCreateSimpleWindow()</A></B>
+is not really simpler than
+<B><A HREF="/gui/x/xlib/window/XCreateWindow.html">XCreateWindow()</A></B>
+(it takes only a few less parameters), but it uses less concepts, so
+we gonna stick to it for now. There are still a bunch of parameters to
+explain:
+
+<UL>
+
+<LI> <CODE>dpy</CODE> is the usual display connection (<A HREF="server.html">remember</A>).
+
+<P><LI> <CODE>DefaultRootWindow(dpy)</CODE>: yet another parameter that may
+seem magic until now. This is the "parent window" of the window we are
+creating. The window we create appears inside its parent, and is
+bounded by it (the window is said to be "clipped" by its
+parent). Those who guess from the name "Default" that they may be
+other root windows guess right. More on this <A
+HREF="screen-and-root-window.html">later</A>. For now, the default
+root window makes appear our window on the screen, and will give the
+<A HREF="window-manager.html">window manager</A> a chance to decorate
+our window.
+
+<P><LI> <CODE>0, 0</CODE> These are the coordinates of the upper left
+corner of the window (the origin of the coordinates in X is at the
+upper left, contrary to most mathematical textbooks). The dimensions,
+like every dimensions in X, are in pixels (X does not support
+user-defined scales, unlike some other graphical systems like 
+<A HREF="/web-directory/science-and-technology/computer/graphics/">OpenGL</A>).
+
+<P>
+
+Contrary to what may seem, there is very little chance for the window
+to appear, at 0,0. The reason is that the 
+<A HREF="window-manager.html">window manager</A> will put the window
+at its policy-defined position.
+
+<P><LI> <CODE>200, 100</CODE>: these are the width and height of the
+window, in pixels.
+
+<P><LI> <CODE>0</CODE>: this is the width of the window's border. This
+has nothing to do with the border appended by the 
+<A HREF="window-manager.html">window manager</A>, so this is most
+often set to zero.
+
+<P><LI> <CODE>blackColor, blackColor</CODE>: these are the colors of the
+window's border (NOT the
+<A HREF="window-manager.html">window manager</A>'s border), and the
+window's background, respectively.
+<B><A HREF="/gui/x/xlib/window/XCreateWindow.html">XCreateSimpleWindow()</A></B>
+clears the window when created,
+<B><A HREF="/gui/x/xlib/window/XCreateWindow.html">XCreateWindow()</A></B>
+does not.
+
+</UL>
+
+<PRE><CODE>
+      // We want to get MapNotify events
+
+      XSelectInput(dpy, w, StructureNotifyMask);
+</PRE></CODE>
+
+As we're starting to know, X is based upon a 
+<A HREF="server.html">client-server</A> architecture. The X server
+sends events to the client (the program we're writing), to keep it
+informed of the modifications in the server. There are many of them
+(each time a window is created, moved, masked, unmasked, and many
+other things), so a client must tell the server the events it is
+interested in. With this <B>XSelectInput()</B> stuff, we tell the
+server we want to be informed of "structural" changes occuring on the
+<TT>w</TT> window. Creation and mapping are such changes. There is no
+way to be informed for example of only mapping modification, and not
+creations, so we've to take everything. In this particular application
+we're interesting in "mapping" events (<I>grosso modo</I>, the window
+appears on the screen). 
+
+<PRE><CODE>
+      // "Map" the window (that is, make it appear on the screen)
+
+      XMapWindow(dpy, w);
+</PRE></CODE>
+
+And (once again) this is a <A HREF="server.html">client-server</A>
+system. The map request is asynchronous, meaning that the time this
+instruction is executed doesn't tell us when the window is actually
+mapped. To be sure, we've to wait for the server to send us a 
+<B><A HREF="/gui/x/xlib/events/window-state-change/map.html">MapNotify</A></B>
+event (this is why we want to be sensitive to such events).
+
+<PRE><CODE>
+      // Create a "Graphics Context"
+
+      GC gc = XCreateGC(dpy, w, 0, NIL);
+</PRE></CODE>
+
+Yet another magic stuff. But mastering them is the reason of the
+existence of this tutorial...
+
+<P>
+
+For several reasons, the graphical model of X is stateless, meaning
+that the server doesn't remember (among other things) attributes such
+as the drawing color, the thickness of the lines and so on. Thus,
+we've to give <EM>all these parameters</EM> to the server on each
+drawing request. To avoid passing two dozens of parameters, many of
+them unchanged from one request to the next, X uses an object called
+the <B>Graphics Context</B>, or <B>GC</B> for short. We store in the
+graphics context all the needed parameters. Here, we want the color
+used to draw lines, called the foregound color:
+
+<PRE><CODE>
+      // Tell the GC we draw using the white color
+
+      XSetForeground(dpy, gc, whiteColor);
+</PRE></CODE>
+
+There are many other parameters used to draw a line, but all of them
+have reasonable default values.
+
+<P>
+
+That's okay for now. Everything is set up, and we wait for the window
+mapping.
+
+<PRE><CODE>
+      // Wait for the MapNotify event
+
+      for(;;) {
+	    XEvent e;
+	    XNextEvent(dpy, &e);
+	    if (e.type == MapNotify)
+		  break;
+      }
+</PRE></CODE>
+
+We loop, taking events as they come and discarding them. When we get a
+<B>MapNotify</B>, we exit the loop. We may get events other than
+<B>MapNotify</B> for two reasons:
+
+<UL>
+<LI> We have selected <B>StructureNotifyMask</B> to get
+<B>MapNotify</B> events, but we could get other events as well (such
+as <B>ConfigureNotify</B>, telling the window has changed in position, and/or
+size).
+<LI> Some events can be received, even if we don't have asked for
+them, they are called "non-maskable". <B>GraphicsExpose</B> is such an
+event.
+</UL>
+
+The non-maskable events are sent only in response to some program
+requests (such as copying an area), so they aren't likely to happen in
+our context.
+
+<P>
+
+The
+<B><A HREF="/gui/x/xlib/event-handling/manipulating-event-queue/XNextEvent.html">XNextEvent()</A></B>
+procedure is blocking, so if there are no event to read, the program
+just wait inside the
+<B><A HREF="/gui/x/xlib/event-handling/manipulating-event-queue/XNextEvent.html">XNextEvent()</A></B>.
+
+<P>
+
+When we have exited the loop, we have good confidence that the window
+appears on the screen. Actually, this may not be the case since, for
+example, the user may have iconified it using the 
+<A HREF="window-manager.html">window manager</A>, but for now, we assume the window
+actually appears. We can draw our line:
+
+<PRE><CODE>
+      // Draw the line
+      
+      XDrawLine(dpy, w, gc, 10, 60, 180, 20);
+</PRE></CODE>
+
+The line is between points (10, 60) and (180, 20). The (0,0) is at the
+upper left corner of the window, as usual. If the program just
+<TT>sleep</TT>s here, nothing will happen, because, in case you don't
+know, X has a <A HREF="server.html">client-server</A>
+architecture. Thus the request stays in the client, unless we tell it
+to go to the server. This is done by <B><A
+HREF="/gui/x/xlib/event-handling/XFlush.html">XFlush()</A></B>:
+
+<PRE><CODE>
+      // Send the "DrawLine" request to the server
+
+      XFlush(dpy);
+</PRE></CODE>
+
+Clever readers may have noticed that we didn't use 
+<B><A HREF="/gui/x/xlib/event-handling/XFlush.html">XFlush()</A></B>
+before, and it didn't prevent all the requests such as 
+<B><A HREF="/gui/x/xlib/window/XMapWindow.html">XMapWindow()</A></B>
+to be sent to the server. The answer is that
+<B><A HREF="/gui/x/xlib/event-handling/manipulating-event-queue/XNextEvent.html">XNextEvent()</A></B>
+performs an implicit
+<B><A HREF="/gui/x/xlib/event-handling/XFlush.html">XFlush()</A></B>
+before trying to read some events. We have our line now, we just wait
+for 10 seconds, so we can make people see how beautiful is our work:
+
+<PRE><CODE>
+      // Wait for 10 seconds
+
+      sleep(10);
+</PRE></CODE>
+
+That's all for now. In <!A HREF="more-interaction.html"><B>next
+lesson</B></A>, we will have a (very) little more interaction. [to be continued]
+
+<HR><ADDRESS><A HREF="http://tronche.com/">Christophe Tronche</A>, <A HREF="mailto:ch.tronche@computer.org">ch.tronche@computer.org</A></ADDRESS>
+</BODY>
+</HTML>

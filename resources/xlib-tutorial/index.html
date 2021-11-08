@@ -1,0 +1,116 @@
+<HTML>
+<HEAD>
+<TITLE>Xlib programming: a short tutorial</TITLE>
+</HEAD>
+
+<BODY>
+
+<H1>Xlib programming: a short tutorial</H1>
+
+I haven't found anything very satisfying on the Web as an Xlib
+tutorial. Many of them are too much Motif-oriented for my
+taste. Furthermore, I answer questions about X programming almost
+daily, so I've started to put together some small coursewares.
+
+<H4>Important note:</H4> the example programs are written in C++, but
+this is mainly for the ability to declare variables anywhere.
+
+<HR>
+
+Let's begin with a short story: the eternal story of the newbie at
+Xlib writing his/her first program.
+
+<P>
+
+<I>
+"Ok, I've to open a connection to the X server (whatever this means),
+with XOpenDisplay, then create a window with XCreateWindow, then draw
+a line with XDrawLine. Then, the program sleeps for ten seconds so I
+can see the result. Sounds easy."
+</I>
+
+<P>
+
+The poor newbie writes the program. And nothing happens. He then
+calls his wizard friend.
+
+<P>
+
+<I>
+-"Did you perform an XFlush after you've done everything ?<BR>
+- No, why ?<BR>
+- The requests stay in the client," </I>wizard doubletalk, thinks the
+poor newbie<I>, " if you
+don't."
+</I>
+
+<P>
+
+The poor newbie changes the program. And nothing happens. He then
+calls his wizard friend.
+
+<P>
+
+<I>
+-"Did you map your window ?<BR>
+- Did I do what ???<BR>
+- Creating a window doesn't make it appear on the screen. You've to
+  map it with XMapWindow first.
+</I>
+
+<P>
+
+The poor newbie changes the program. The window appears with nothing
+in it (<A HREF="prog-1.cc">like this</A>). The poor newbie then calls
+his wizard friend.
+
+<P>
+
+<I>
+-"Did you wait for a MapNotify before drawing your line ?" </I>(more wizard doubletalk)<I><BR>
+- "No, why ?</BR>
+- X has a stateless drawing model, the content of the window may be lost
+  when the window isn't on the screen." </I>(overflow, why can't these
+  wizard guys speak just like you and me ?)<I> "You've to wait for a MapNotify
+  before drawing."
+</I>
+
+<P>
+
+The poor newbie changes the program. Things are getting more and more
+complex. Not as easy as it first seemed. A loop gets the events until a
+MapNotify. The window appears with nothing
+in it. The poor newbie then calls his wizard friend.
+
+<P>
+
+<I>
+-"I got it, did you select the StructureNotifyMask on your window ?<BR>
+- ???<BR>
+- Just do it, and everything'll be fine.
+</I>
+
+<P>
+
+The poor newbie fixes the program. And the miracle happens ! A line in the
+window. Until now, the program looks like <A HREF="prog-2.cc">this</A>
+(it is actually slighty more complex than the dialog may let you think).
+
+<P>
+
+Now you've learned at least 2 things:
+
+<UL>
+<LI> How to draw a line in a window with X.
+<LI> Why some may need an X tutorial.
+</UL>
+
+Now, if you want to learn more and get a deeper understanding of the
+program, go to <A HREF="2nd-program-anatomy.html">next lesson</A>.
+
+<H4><A HREF="/gui/x/">More about X</A>.</H4>
+
+
+<HR><ADDRESS><A HREF="http://tronche.com/">Christophe Tronche</A>, <A HREF="mailto:ch.tronche@computer.org">ch.tronche@computer.org</A></ADDRESS>
+</BODY>
+</HTML>

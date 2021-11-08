@@ -1,0 +1,89 @@
+<HTML>
+<HEAD>
+<TITLE>Xlib programming tutorial: What is all this "client-server" stuff ?</TITLE>
+</HEAD>
+
+<BODY>
+<H1 ALIGN=center>What does all this stuff about "client-server" mean ?</H1>
+
+Everybody says that X has a "client-server" architecture. So this must
+be true, but what does it mean ?
+
+<P>
+
+Well, basically a client-server architecture is conceptually a simple
+thing, but the consequences may be a bit subtle, especially the way it
+is implemented in the Xlib.
+
+<H2>What is a client-server architecture ?</H2>
+
+A client-server architecture is a general mechanism for handling a
+shared resource that several programs may want to access
+simultaneously. In the case of X, the shared resources are the drawing
+area and the input channel. If every process was allowed to write on
+it at its will, several processes may want to draw at the same place,
+resulting in an unpredictable chaos. Thus, only one process is allowed
+to get access to the drawing area: the X server. The processes wanting
+to draw stuff or get inputs send requests to the X servers (they are
+"clients"). They do this over a communication channel. The X server
+performs the requests for its clients, and sends them back replies. It
+may also send messages without explicit client's requests to keep them
+informed of what is going on. These messages sent by the server on its
+own behalf are called "events".
+
+<H2>Advantages of the client-server architecture</H2>
+
+The client-server architecture has several advantages, many of them
+resulting from the ability to run the server and the clients on
+separate machines. Here are some advantages:
+
+<UL>
+
+<LI> A client-server architectured system can be very robust: since
+     the server runs in its own address space, it can protect itself
+     against poorly written clients. Thus, if a client has a bug, it
+     will crash alone, the server and the other clients still running
+     as if nothing has happened.
+
+<LI> The client and the server don't have to run on the same machine,
+     so we have some communication mechanism here.
+
+<LI> The client and the server may run on separate machines, resulting
+     in a better load distribution (possibly).
+
+<LI> The client and the server don't have to run on the same hardware,
+     operating system, etc., giving a better interoperability.
+
+</UL>
+
+<H2>Structure of the X client-server architecture</H2>
+
+As we already mentioned, the server and a client communicates over a
+communication channel. This channel is composed of two layers: the
+low-level one, which is responsible for carrying bytes in a reliable
+way (that is with no loss nor duplication). This link may be among
+others a named pipe in the Unix environment, a DECNet link and of
+course a TCP/IP connection.
+
+<P>
+
+The upper layer use the byte-transport channel to implement a
+higher-level protocol: the X protocol. This protocol says how to tell
+the server to request window creation, graphics drawing, and so on,
+and how the server answers and sends events. The protocol itself is
+separated into different parts:
+
+<UL>
+
+<LI> How to connect and how to break a connection,
+<LI> how to represent the different data types,
+<LI> what are the requests and what they mean and
+<LI> what are the replies and what they mean.
+
+</UL>
+
+[to be continued].
+
+<HR><ADDRESS><A HREF="http://tronche.com/">Christophe Tronche</A>, <A HREF="mailto:ch.tronche@computer.org">ch.tronche@computer.org</A></ADDRESS>
+</BODY>
+</HTML>
